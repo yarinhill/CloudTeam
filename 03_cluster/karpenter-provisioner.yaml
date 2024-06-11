@@ -1,0 +1,75 @@
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: karpenterprovisioner
+spec:
+  ttlSecondsAfterEmpty: 30 
+  ttlSecondsUntilExpired: 800
+  limits:
+    resources:
+      cpu: "100"
+      memory: "64Gi"
+  requirements:
+    - key: "kubernetes.io/os"
+      operator: In
+      values: ["linux"]
+    - key: "karpenter.k8s.aws/instance-family"
+      operator: In
+      values: ["t3", "t3a", "t2"] 
+    - key: "karpenter.sh/capacity-type"
+      operator: In
+      values: ["spot", "on-demand"]
+  providerRef:
+    name: my-provider
+
+---
+
+apiVersion: karpenter.k8s.aws/v1alpha1
+kind: AWSNodeTemplate
+metadata:
+  name: my-provider
+spec:
+  subnetSelector:
+    kubernetes.io/cluster/<your_cluster_name>: owned ## Replace with your cluster name
+  securityGroupSelector:
+    kubernetes.io/cluster/<your_cluster_name>: owned ## Replace with your cluster name
+
+---
+
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: ng-spot
+spec:
+  template:
+    spec:
+      nodeClassRef:
+        apiVersion: karpenter.k8s.aws/v1beta1
+        kind: EC2NodeClass
+        name: ng-spot-class
+      requirements:
+        - key: "kubernetes.io/os"
+          operator: In
+          values: ["linux"]
+        - key: "karpenter.k8s.aws/instance-family"
+          operator: In
+          values: ["t3", "t3a", "t2"] 
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values: ["spot", "on-demand"]
+
+---
+
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: ng-spot-class
+  namespace: karpenter
+spec:
+  amiFamily: AL2
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: <your_cluster_name> ## Replace with your eks cluster name
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery/<your_cluster_name>: 'owned' ## Replace with your eks cluster name

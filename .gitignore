@@ -1,0 +1,3 @@
+02_terraform/.terraform*
+02_terraform/terraform.tfstate*
+.git

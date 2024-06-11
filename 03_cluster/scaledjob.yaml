@@ -1,0 +1,51 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: python-app-scaledjob
+  namespace: default
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+        - name: python-app
+          image: <your_docker_image> ## Replace with your docker Image
+          env:
+            - name: QUEUE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: python-app-config
+                  key: QUEUE_URL
+            - name: BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: python-app-config
+                  key: BUCKET_NAME
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: python-app-config
+                  key: AWS_REGION
+          resources:
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+            limits:
+              cpu: "8"
+              memory: "8Gi"
+        nodeSelector:
+          karpenter.sh/capacity-type: spot
+  pollingInterval: 10
+  successfulJobsHistoryLimit: 10
+  failedJobsHistoryLimit: 10
+  maxReplicaCount: 10
+  minReplicaCount: 0   
+  triggers:
+  - type: aws-sqs-queue
+    authenticationRef:
+      name: keda-trigger-auth-aws-credentials
+    metadata:
+      queueURL: <your_sqs_url> ## Replace with your SQS URL
+      queueLength: "1"
+      awsRegion: <your_region> ## Replace with your AWS Region
+      identityOwner: pod | operator

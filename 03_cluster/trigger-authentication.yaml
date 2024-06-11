@@ -1,0 +1,10 @@
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-trigger-auth-aws-credentials
+  namespace: default
+spec:
+  secretTargetRef:
+  - parameter: awsRegion
+    name: python-app-config
+    key: AWS_REGION
