@@ -70,6 +70,7 @@
                 "eks:DeleteNodegroup",
                 "eks:DescribeNodegroup",
                 "eks:TagResource",
+                "eks:DescribeClusterVersions",
                 "ecr:CreateRepository",
                 "ecr:GetAuthorizationToken",
                 "ecr:InitiateLayerUpload",
